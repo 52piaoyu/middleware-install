@@ -1,0 +1,42 @@
+#!/bin/bash
+
+CADDY_HOME=/usr/local/caddy
+CADDY_BIN=$CADDY_HOME/bin/caddy
+CONFIGFILE=$CADDY_HOME/conf/Caddyfile
+CADDY_SUPERVISE="$CADDY_HOME/bin/supervise.caddy"
+
+function start(){
+	stop
+	sleep 1
+	setsid "$CADDY_SUPERVISE" -u "$CADDY_HOME/status/caddy" "$CADDY_BIN" -conf=$CONFIGFILE
+}
+
+function stop(){
+    killall -9 supervise.caddy
+	killall -9 caddy
+}
+
+function restart(){
+	stop
+    sleep 1
+    start
+}
+
+
+case C"$1" in
+	Cstart)
+		start
+		echo "start Done!"
+		;;
+	Cstop)
+		stop
+		echo "stop Done!"
+		;;
+	Crestart)
+		restart
+		echo "restart Done!"
+		;;
+	C*)
+		echo "Usage: $0 {start|stop|restart}"
+		;;
+esac

@@ -1,0 +1,50 @@
+#!/bin/sh
+
+PATH=/usr/local/redis/bin:$PATH
+export PATH 
+REDISPORT=6379 
+EXEC="/usr/local/redis/bin/redis-server"  
+REDIS_CLI="/usr/local/redis/bin/redis-cli"    
+
+PIDFILE="/usr/local/redis/run/redis.pid"
+CONF="/usr/local/redis/etc/redis.conf"
+
+case "$1" in   
+        start)   
+                if [ -f $PIDFILE ]   
+                then   
+                        echo "$PIDFILE exists, process is already running or crashed."  
+                else  
+                        echo "Starting Redis server..."  
+                        $EXEC $CONF   
+                fi   
+                if [ "$?"="0" ]   
+                then   
+                        echo "Redis is running..."  
+                fi   
+                ;;   
+        stop)   
+                if [ ! -f $PIDFILE ]   
+                then   
+                        echo "$PIDFILE do not exist, process is not running."  
+                else  
+                        PID=$(cat $PIDFILE)   
+                        echo "Stopping..."  
+                        $REDIS_CLI -p $REDISPORT  SHUTDOWN    
+                        sleep 2  
+                        while [ -x $PIDFILE ]   
+                        do  
+                            echo "Waiting for Redis to shutdown..."  
+                            sleep 1  
+                        done   
+                        echo "Redis stopped"  
+                fi   
+                ;;   
+        restart)   
+                ${0} stop   
+                ${0} start   
+                ;;   
+        *)   
+               echo "Usage: redis_ctl {start|stop|restart}" >&2  
+                exit 1  
+esac

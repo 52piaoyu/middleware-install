@@ -1,0 +1,98 @@
+#!/bin/sh
+
+PATH=/usr/local/nginx/bin:$PATH
+export PATH 
+NAME=nginx
+NGINX_BIN=/usr/local/nginx/bin/$NAME
+CONFIGFILE=/usr/local/nginx/conf/$NAME.conf
+PIDFILE=/usr/local/nginx/run/$NAME.pid
+
+case "$1" in
+    start)
+        echo -n "Starting $NAME... "
+
+        if netstat -tnpl | grep -q nginx;then
+            echo "$NAME (pid `pidof $NAME`) already running."
+            exit 1
+        fi
+
+        $NGINX_BIN -c $CONFIGFILE
+
+        if [ "$?" != 0 ] ; then
+            echo " failed"
+            exit 1
+        else
+            echo " done"
+        fi
+        ;;
+
+    stop)
+        echo -n "Stoping $NAME... "
+
+        if ! netstat -tnpl | grep -q nginx; then
+            echo "$NAME is not running."
+            exit 1
+        fi
+
+        $NGINX_BIN -s stop
+
+        if [ "$?" != 0 ] ; then
+            echo " failed. Use force-quit"
+            exit 1
+        else
+            echo " done"
+        fi
+        ;;
+
+    status)
+        if netstat -tnpl | grep -q nginx; then
+            PID=`pidof nginx`
+            echo "$NAME (pid $PID) is running..."
+        else
+            echo "$NAME is stopped"
+            exit 0
+        fi
+        ;;
+
+    force-quit)
+        echo -n "Terminating $NAME... "
+
+        if ! netstat -tnpl | grep -q nginx; then
+            echo "$NAME is not running."
+            exit 1
+        fi
+
+        kill -9 `pidof $NAME`
+
+        if [ "$?" != 0 ] ; then
+            echo " failed"
+            exit 1
+        else
+            echo " done"
+        fi
+        ;;
+
+    restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+
+    reload)
+        echo -n "Reload service $NAME... "
+
+        if netstat -tnpl | grep -q nginx; then
+            $NGINX_BIN -s reload
+            echo " done"
+        else
+            echo "$NAME is not running, can't reload."
+            exit 1
+        fi
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|force-quit|restart|reload|status}"
+        exit 1
+        ;;
+
+esac
